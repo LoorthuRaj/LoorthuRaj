@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dummy PDP | Trail Running Shoe</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 24px; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .box { border: 1px solid #ddd; border-radius: 12px; padding: 16px; flex: 1; min-width: 280px; background: #fff; }
+    .muted { color: #666; font-size: 13px; }
+    .price { font-size: 24px; font-weight: 800; margin: 10px 0; }
+    button { padding: 10px 12px; border-radius: 10px; border: 1px solid #999; background: #fff; cursor: pointer; font-weight: 700; }
+    button.primary { background: #111; color: #fff; border-color: #111; }
+    a { color: #111; text-decoration: underline; }
+    select { padding: 8px 10px; border-radius: 10px; border: 1px solid #999; }
+    .crumbs { font-size: 13px; margin-bottom: 10px; }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="crumbs">
+    <a href="#home" data-link-name="Breadcrumb: Home">Home</a> /
+    <a href="#shoes" data-link-name="Breadcrumb: Shoes">Shoes</a> /
+    <span>Trail Running Shoe</span>
+  </div>
+
+  <div class="row">
+    <div class="box">
+      <div class="muted">Image placeholder</div>
+      <div style="height:180px;border:1px dashed #ccc;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-top:10px;">
+        Product Image
+      </div>
+      <p class="muted" style="margin-top:10px;">
+        Lightweight trail shoe with durable outsole and breathable upper.
+      </p>
+      <a href="#reviews" data-link-name="PDP: Reviews Link">Read reviews</a>
+    </div>
+
+    <div class="box">
+      <h1 style="margin:0;">Trail Running Shoe</h1>
+      <div class="muted">SKU: <b id="skuText"></b> • Brand: <b>Acme</b></div>
+      <div class="muted">Category: Shoes > Running</div>
+
+      <div class="price">₹ <span id="priceText"></span></div>
+
+      <div style="display:flex; gap:12px; margin: 10px 0;">
+        <div>
+          <div class="muted">Color</div>
+          <select id="color">
+            <option>Blue</option>
+            <option>Black</option>
+          </select>
+        </div>
+        <div>
+          <div class="muted">Size</div>
+          <select id="size">
+            <option>UK 7</option>
+            <option selected>UK 8</option>
+            <option>UK 9</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top: 12px;">
+        <button id="addToCart" data-link-name="PDP: Add to Cart">Add to cart</button>
+        <button class="primary" id="buyNow" data-link-name="PDP: Buy Now">Buy now</button>
+      </div>
+
+      <div class="muted" style="margin-top:10px;">
+        Cart count: <b id="cartCount">0</b>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <a href="#size-guide" data-link-name="PDP: Size Guide">Size guide</a>
+        &nbsp;•&nbsp;
+        <a href="#delivery" data-link-name="PDP: Delivery Info">Delivery info</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * Adobe/Web SDK-aligned data layer
+ * - Uses window.adobeDataLayer (Adobe Client Data Layer pattern)
+ * - Each event includes: event (name), eventType (Web SDK), xdm (XDM payload)
+ */
+
+window.adobeDataLayer = window.adobeDataLayer || [];
+
+function uuidv4() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+const PRODUCT = {
+  sku: "SKU-TRAIL-001",
+  name: "Trail Running Shoe",
+  brand: "Acme",
+  categories: ["Shoes", "Running"],
+  price: 4999,
+  currency: "INR"
+};
+
+const PAGE = {
+  name: "PDP | Trail Running Shoe",
+  type: "pdp",
+  siteSection: "ecommerce",
+  language: document.documentElement.lang || "en-IN"
+};
+
+document.getElementById("skuText").textContent = PRODUCT.sku;
+document.getElementById("priceText").textContent = PRODUCT.price.toLocaleString("en-IN");
+
+function getVariant() {
+  return {
+    color: document.getElementById("color").value,
+    size: document.getElementById("size").value
+  };
+}
+
+function baseXdm() {
+  return {
+    eventMergeId: uuidv4(), // useful for debugging / dedupe patterns
+    web: {
+      webPageDetails: {
+        name: PAGE.name,
+        pageViews: { value: 1 },  // common for page view events
+        URL: location.href,
+        siteSection: PAGE.siteSection
+      },
+      webReferrer: {
+        URL: document.referrer || null
+      }
+    },
+    productListItems: [
+      {
+        SKU: PRODUCT.sku,
+        name: PRODUCT.name,
+        brand: PRODUCT.brand,
+        categories: PRODUCT.categories.map(c => ({ categoryName: c })),
+        priceTotal: PRODUCT.price,
+        currencyCode: PRODUCT.currency,
+        // optional: variant attributes (kept simple)
+        characteristics: [
+          { name: "color", value: getVariant().color },
+          { name: "size", value: getVariant().size }
+        ],
+        quantity: 1
+      }
+    ]
+  };
+}
+
+function pushAdobeEvent({ event, eventType, xdm, data }) {
+  const obj = {
+    event,
+    eventType,   // this maps directly to alloy sendEvent({ eventType })
+    xdm,         // this maps directly to alloy sendEvent({ xdm })
+    data         // optional non-XDM data if you want it
+  };
+  window.adobeDataLayer.push(obj);
+  console.log("[adobeDataLayer push]", obj);
+}
+
+/** 1) PAGE VIEW on load (Web SDK style) */
+pushAdobeEvent({
+  event: "page_view",
+  // commonly used Web SDK eventType (you can standardize your own too)
+  eventType: "web.webpagedetails.pageViews",
+  xdm: baseXdm()
+});
+
+/** 2) LINK CLICK tracking */
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-link-name]");
+  if (!el) return;
+
+  const linkName = el.getAttribute("data-link-name");
+  const linkUrl = (el.tagName.toLowerCase() === "a") ? el.getAttribute("href") : null;
+
+  const xdm = baseXdm();
+  xdm.web.webInteraction = {
+    name: linkName,
+    type: "other",               // can be "other", "download", "exit", etc.
+    URL: linkUrl || location.href,
+    linkClicks: { value: 1 }
+  };
+
+  pushAdobeEvent({
+    event: "link_click",
+    eventType: "web.webinteraction.linkClicks",
+    xdm
+  });
+});
+
+/** UI-only cart counter (not required for your practice) */
+let cart = 0;
+document.getElementById("addToCart").addEventListener("click", () => {
+  cart += 1;
+  document.getElementById("cartCount").textContent = String(cart);
+});
+document.getElementById("buyNow").addEventListener("click", () => {
+  alert("Buy Now (dummy). Your practice event is link_click.");
+});
+</script>
+
+</body>
+</html>
